@@ -1,38 +1,39 @@
 section .data
 codes:
-	db	'0123456789ABCDEF'
+	db '0123456789ABCDEF'
 
 section .text
 global _start
 _start:
-	; number 1234567887654321 in hex format
-	mov rax, 0x1234567812345678  
+	;number to print
+	lea rax, [codes]
 
-	mov rdi, 1 ;print to stdout
-	mov rdx, 1 ;we're printing a byte each time
+	mov rdi, 1
+	mov rdx, 1 	;only printing 1b at a time to stdout
 	mov rcx, 64
-	; Each 4 bits should be output as one hex digit
-	; Use shift and logical AND to isolate them
-	; the result is the offset in 'codes' array
+	; Each 4 bits is output as 1 hex digit
+	; Use shift and bitwise AND to isolate them
+	; result is then offset in 'codes' array
 .loop:
-	push rax; store our number "1234567887654321"
+	push rax
 	sub rcx, 4
+	; cl is smallest part of rcx
 	sar rax, cl
-	and rax, 0xf
+	and rax, 0xF
 	
 	lea rsi, [codes + rax]
 	mov rax, 1
-
-	; syscall affects rcx and r11
-	push rcx 
-	syscall
-	pop rcx
 	
+	;syscall will change rcx and r11
+	push rcx
+	syscall 	;print number
 	pop rcx
-	;test is fastest is it zero check
+
+	pop rax 	;return rax to original number so shifting works
+	;test rcx, rcx is like sub rcx, rcx but faster
 	test rcx, rcx
 	jnz .loop
 
-	mov rax, 60
+	mov rax, 60	;exit
 	xor rdi, rdi
 	syscall
